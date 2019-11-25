@@ -39,13 +39,24 @@ plt.legend()
 plt.show()
 ```
 Brief explanation of parameters:
+
 freq: The number of time periods that make up the most significant cycle in your series.  7 for weekly, 365/366 for yearly.
+
 regularization: Penalty for the number of boosting iterations.  1.2 works well.
+
 ols_constant: False enforces connectivity constraints at the splits.  True will probably overfit but will react better to short term shocks.
+
 poly: The degree of the polynomial expansion.  1 means no expansion.  2 will overfit in most cases but can be used as a smoother.
+
 n_steps: Number of steps forward to extrapolate the trend and seasonality.
+
 seasonal_smoothing: Smooths out the seasonality shape.  Don't use with small freq.
+
 l2: The lambda for l2 regularization.  Pretty sure this breaks the n_steps extrapolation.
+
 max_changepoints: The max number of boosting rounds.
+
 positive:  Whether the output should be contrained to be >= 0.
+
 min_samples: The minumum number of samples to consider a split.  Too low will allow the model to cheat at the beginning and end of the series.
+
