@@ -46,7 +46,7 @@ regularization: Penalty for the number of boosting iterations.  1.2 works well.
 
 ols_constant: False enforces connectivity constraints at the splits.  True will probably overfit but will react better to short term shocks.
 
-poly: The degree of the polynomial expansion.  1 means no expansion.  2 will overfit in most cases but can be used as a smoother.
+poly: The degree of the polynomial expansion.  1 means no expansion.  2 or 3 will overfit in most cases but can be used as a smoother.  As you increase this, it will misinterpret seasonality as trend since you allow non-linear trends.   
 
 n_steps: Number of steps forward to extrapolate the trend and seasonality.
 
