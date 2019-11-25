@@ -2,15 +2,9 @@
 """
 Created on Sat Nov 16 08:57:28 2019
 
-@author: txb3y48
+@author: Tyler Blume
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Apr 19 23:53:24 2019
-
-@author: txb8r44
-"""
 
 import numpy as np
 import matplotlib.pyplot as plt
