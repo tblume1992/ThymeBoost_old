@@ -1,6 +1,7 @@
 # ThymeBoost
 Modified Gradient Boosted Trees for the use of Time Series prediction and decomposition
 Example using Bitcoin price vs. Prophet:
+```python
   import quandl
   import fbprophet
   import TsBoost
@@ -32,3 +33,4 @@ Example using Bitcoin price vs. Prophet:
   plt.plot(proph, label = 'Prophet')
   plt.legend()
   plt.show()
+```
