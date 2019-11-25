@@ -1,8 +1,9 @@
 # ThymeBoost
-Modified Gradient Boosted Trees for the use of Time Series prediction and decomposition
+Modified Gradient Boosted Trees for the use of spicy Time Series prediction and decomposition
 
 Input: pandas series with a DateTime index
-Output: Seasonal and trend decomposition along with anomalies and forward looking predictions.
+
+Output: Seasonal and trend decomposition along with anomalies and forward looking predictions.  All in a dictionary returned from the fit method.  To graph results nicely, call the plot_results method using the Thyme object.
 
 Example using Bitcoin price vs. Prophet:
 ```python
