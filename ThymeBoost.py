@@ -2,14 +2,7 @@
 """
 Created on Sat Nov 16 08:57:28 2019
 
-@author: txb3y48
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Apr 19 23:53:24 2019
-
-@author: txb8r44
+@author: Tyler Blume
 """
 
 import numpy as np
