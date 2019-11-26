@@ -67,4 +67,4 @@ min_samples: The minumum number of samples to consider a split.  Too low will al
 
 additive: Default is True.  Denotes whether to use additive (True) or multiplicative (False) seasonal factors. Helpful for if your residuals are unbiased but increasing/decreasing in variance.  
 
-nested_seasonality: Default is False.  ONLY set to True if you have daily data for multiple years as it will measure your yearly seasonalty and weekly seasonality.  Those two cycles are commonly the most impactful.  
+nested_seasonality: Default is False.  ONLY set to True if you have daily data for multiple years as it will measure your yearly seasonalty and weekly seasonality.  Those two cycles are commonly the most impactful.  This will give nonsense results for Weekly Seasonality if that seasonal factor is not useful (i.e. Long run Bitcoin price are not influenced by this cycle).
