@@ -59,5 +59,5 @@ max_changepoints: The max number of boosting rounds.
 
 positive:  Whether the output should be contrained to be >= 0.
 
-min_samples: The minumum number of samples to consider a split.  Too low will allow the model to cheat at the beginning and end of the series.
+min_samples: The minumum number of samples to consider a split.  Too low will allow the model to cheat at the beginning and end of the series. I recommend putting in between 1 and 2 times the number of data points in your smallest seasonal cycle. So far daily data your smallest cycle would be weekly, so make min_samples between 7 and 14.  For weekly data your smallest cycle would be a month, so I recommend between 4 and 8 for min_samples.  
 
