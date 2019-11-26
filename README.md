@@ -10,6 +10,8 @@ Example using Bitcoin price vs. Prophet:
 import quandl
 import fbprophet
 import ThymeBoost as tb
+import pandas as pd
+import matplotlib.pyplot as plt
 
 data = quandl.get("BITSTAMP/USD")
 y = data['High']
@@ -27,7 +29,9 @@ boosted_model = tb.ThymeBoost(freq = 365,
                                 ols_constant = False, 
                                 poly = 1, 
                                 n_steps = 20,
-                                seasonal_smoothing = True)
+                                seasonal_smoothing = True,
+                                additive = False,
+                                nested_seasonality = False)
 output = boosted_model.fit(y)
 boosted_model.plot_results()
 tsboosted_ = output['Full Output']
@@ -61,3 +65,6 @@ positive:  Whether the output should be contrained to be >= 0.
 
 min_samples: The minumum number of samples to consider a split.  Too low will allow the model to cheat at the beginning and end of the series. I recommend putting in between 1 and 2 times the number of data points in your smallest seasonal cycle. So for daily data your smallest cycle would be weekly, so make min_samples between 7 and 14.  For weekly data your smallest cycle would be a month, so I recommend between 4 and 8 for min_samples.  
 
+additive: Default is True.  Denotes whether to use additive (True) or multiplicative (False) seasonal factors. Helpful for if your residuals are unbiased but increasing/decreasing in variance.  
+
+nested_seasonality: Default is False.  ONLY set to True if you have daily data for multiple years as it will measure your yearly seasonalty and weekly seasonality.  Those two cycles are commonly the most impactful.  
