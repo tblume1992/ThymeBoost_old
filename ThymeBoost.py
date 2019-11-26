@@ -23,12 +23,14 @@ class ThymeBoost():
                min_samples = 5, 
                estimators = 'ols', 
                regularization = 1, 
-               ols_constant = True, 
+               ols_constant = False, 
                poly = 1, 
                positive = False, 
                l2 = 0, 
                n_steps = 1,
-               seasonal_smoothing = False):
+               seasonal_smoothing = False,
+               additive = True,
+               nested_seasonality = False):
     
     self.bic = 10**100
     self.estimators = estimators
@@ -43,6 +45,11 @@ class ThymeBoost():
     self.freq = freq
     self.n_steps = n_steps
     self.seasonal_smoothing = seasonal_smoothing
+    self.additive = additive   
+    self.nested_seasonality = nested_seasonality
+
+    if self.freq < 30:
+      self.seasonal_smoothing = False
     if estimators != 'ols':
         self.poly = 1
     
@@ -61,7 +68,15 @@ class ThymeBoost():
     return predicted
 
   def seasonal(self, resids):
-    seasonality = np.array([np.mean(resids[i::self.freq], axis=0) for i in range(self.freq)])
+    if self.nested_seasonality:
+      seasonality = np.array([np.mean(resids[i::self.freq], axis=0) for i in range(self.freq)])
+      if self.additive:
+        self.daily_seasonality = np.array([np.mean(resids.add(np.tile(seasonality,1000)[:len(resids)])[i::7], axis=0) for i in range(7)])
+      else:
+        self.daily_seasonality = np.array([np.mean(resids.multiply(np.tile(seasonality,1000)[:len(resids)])[i::7], axis=0) for i in range(7)])
+      self.daily_seasonality = pd.Series(np.tile(self.daily_seasonality, 1000)[:len(self.x) + self.n_steps])
+    else:
+      seasonality = np.array([np.mean(resids[i::self.freq], axis=0) for i in range(self.freq)])  
     if self.seasonal_smoothing:
       b, a = scipy.signal.butter(8, 0.125)
       seasonality = scipy.signal.filtfilt(b,a,seasonality)
@@ -184,22 +199,52 @@ class ThymeBoost():
   def fit(self, x):
       self.x = x
       self.get_trends()
-      self.seasonality = pd.Series(self.seasonal(self.boosted_data))
-      try:
-        if self.freq ==  7:
-            day_of_week = [pd.to_datetime(str(i)).strftime("%A") for i in pd.Series(self.boosted_data).index.values[:self.freq]]
-            self.seasonality.index = day_of_week
-        else:
-            day_of_week = [pd.to_datetime(str(i)) for i in pd.Series(self.boosted_data).index.values[:self.freq]]
-            self.seasonality.index = day_of_week
-      except:
-        pass
+      if self.additive:
+        self.seasonality = pd.Series(self.seasonal(self.boosted_data))
+      else:
+        self.seasonality = pd.Series(self.seasonal(self.x/self.trends_found))
+        
+      if self.nested_seasonality:
+              day_of_week = [pd.to_datetime(str(i)).strftime("%A") for i in pd.Series(self.x).index.values[:self.freq]]
+              self.seasonality.index = self.x.index[:self.freq]
+              self.graph_daily_seasonality = self.daily_seasonality[:7]
+              self.graph_daily_seasonality.index = day_of_week[:7]
+
+      else:
+        try:
+          if self.freq ==  7:
+              day_of_week = [pd.to_datetime(str(i)).strftime("%A") for i in pd.Series(self.boosted_data).index.values[:self.freq]]
+              self.seasonality.index = day_of_week
+          else:
+              day_of_week = [pd.to_datetime(str(i)) for i in pd.Series(self.boosted_data).index.values[:self.freq]]
+              self.seasonality.index = day_of_week
+        except:
+          pass
                 
       self.full_seasonal = np.tile(self.seasonality, 1000)
       self.trends = pd.Series(self.trends_found, index = pd.Series(self.x).index.values).append(self.extrapolate())
-      self.full_changepoint = self.trends.add(self.full_seasonal[:len(self.trends)])
+      if self.nested_seasonality:
+        if self.additive:
+          self.full_changepoint = self.trends.add(self.full_seasonal[:len(self.trends)])
+          d_seasonality = pd.Series(self.daily_seasonality[:len(self.trends)])
+          d_seasonality.index = self.full_changepoint.index
+          self.full_changepoint = self.full_changepoint.add(d_seasonality)
+          
+        else:
+          self.full_changepoint = self.trends.multiply(self.full_seasonal[:len(self.trends)])
+          d_seasonality = pd.Series(self.daily_seasonality[:len(self.trends)])
+          d_seasonality.index = self.full_changepoint.index
+          self.full_changepoint = self.full_changepoint.multiply(d_seasonality)
+      else:
+        if self.additive:
+          self.full_changepoint = self.trends.add(self.full_seasonal[:len(self.trends)])
+        else:
+          self.full_changepoint = self.trends.multiply(self.full_seasonal[:len(self.trends)])
+      
+        
       if self.positive:
         self.full_changepoint[self.full_changepoint < 0] = 0
+      self.full_changepoint.index = self.trends.index
       anomalies = self.get_anomalies()
       anomalies = pd.DataFrame(anomalies)
       anomalies.index = self.x.index.values[anomalies.index.values]
@@ -225,7 +270,10 @@ class ThymeBoost():
       return output_dict
     
   def plot_results(self):
-    fig, axarr = plt.subplots(3, 1)    
+    if self.nested_seasonality:
+      fig, axarr = plt.subplots(4, 1)    
+    else:
+      fig, axarr = plt.subplots(3, 1)    
     fig.set_figheight(10)
     fig.set_figwidth(12)
     plt.tight_layout()
@@ -249,10 +297,20 @@ class ThymeBoost():
     axarr[1].set_title('Seasonality')
     plt.plot(self.seasonality)
     plt.sca(axarr[2]) 
-    axarr[2].set_title('Residuals')
-    plt.plot(self.residuals)
-    plt.plot(self.trend, color = 'black')    
-    plt.show()
+    if self.nested_seasonality:
+      axarr[2].set_title('Weekly Seasonality')
+      plt.plot(self.graph_daily_seasonality[:7]) 
+      plt.sca(axarr[3])        
+      axarr[3].set_title('Residuals')
+      plt.plot(self.residuals)
+      plt.plot(self.trend, color = 'black')    
+      plt.show()    
+    else:
+      axarr[2].set_title('Residuals')
+      plt.plot(self.residuals)
+      plt.plot(self.trend, color = 'black')    
+      plt.show()
+
     return
     
     
