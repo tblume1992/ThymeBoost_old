@@ -41,9 +41,9 @@ plt.show()
 ```
 Brief explanation of parameters:
 
-freq: The number of time periods that make up the most significant cycle in your series.  7 for weekly, 365/366 for yearly.
+freq: The number of time periods that make up the most significant cycle in your series.  7 for weekly, 365/366 for yearly.  If your  trend line and fitted line are about the same then you have chosen a uninformative freq!
 
-regularization: Penalty for the number of boosting iterations.  1.2 works well.
+regularization: Penalty for the number of boosting iterations.  1.2 works well. 1 is no regularization, 2 or more is a lot of regularization and would result in too few trends found. 0.5 or less is very little regularization and would result in too many trends.
 
 ols_constant: False enforces connectivity constraints at the splits.  True will probably overfit but will react better to short term shocks.
 
@@ -59,5 +59,5 @@ max_changepoints: The max number of boosting rounds.
 
 positive:  Whether the output should be contrained to be >= 0.
 
-min_samples: The minumum number of samples to consider a split.  Too low will allow the model to cheat at the beginning and end of the series. I recommend putting in between 1 and 2 times the number of data points in your smallest seasonal cycle. So far daily data your smallest cycle would be weekly, so make min_samples between 7 and 14.  For weekly data your smallest cycle would be a month, so I recommend between 4 and 8 for min_samples.  
+min_samples: The minumum number of samples to consider a split.  Too low will allow the model to cheat at the beginning and end of the series. I recommend putting in between 1 and 2 times the number of data points in your smallest seasonal cycle. So for daily data your smallest cycle would be weekly, so make min_samples between 7 and 14.  For weekly data your smallest cycle would be a month, so I recommend between 4 and 8 for min_samples.  
 
