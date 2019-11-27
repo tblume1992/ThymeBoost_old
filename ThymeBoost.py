@@ -5,6 +5,7 @@ Created on Sat Nov 16 08:57:28 2019
 @author: Tyler Blume
 """
 
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -76,14 +77,18 @@ class ThymeBoost():
         self.daily_seasonality = np.array([np.mean(resids.add(np.tile(seasonality,1000)[:len(resids)])[i::7], axis=0) for i in range(7)])
       else:
         self.daily_seasonality = np.array([np.mean(resids.multiply(np.tile(seasonality,1000)[:len(resids)])[i::7], axis=0) for i in range(7)])
+        self.daily_seasonality = self.daily_seasonality/np.mean(self.daily_seasonality)
       self.daily_seasonality = pd.Series(np.tile(self.daily_seasonality, 1000)[:len(self.x) + self.n_steps])
+
     else:
       seasonality = np.array([np.mean(resids[i::self.freq], axis=0) for i in range(self.freq)])  
     if self.seasonal_smoothing:
       b, a = scipy.signal.butter(8, 0.125)
-      seasonality = scipy.signal.filtfilt(b,a,seasonality)
-      #seasonality = self.smooth(seasonality)
-
+      if self.additive:
+        seasonality = scipy.signal.filtfilt(b,a,seasonality)
+        #seasonality = self.smooth(seasonality)
+      else:
+        seasonality = scipy.signal.filtfilt(b,a,seasonality)/np.mean(seasonality)
     return seasonality
             
   def calc_bic(self, N, trend, c):
@@ -101,7 +106,10 @@ class ThymeBoost():
       return y
    
   def get_approximate_split_proposals(self):
-    return [i for i in list(range(1, len(self.boosted_data) - 2)) if i % 10 == 0]
+    gradient = pd.Series(np.abs(np.gradient(self.boosted_data, edge_order=1)))
+    gradient = gradient.sort_values(ascending = False)[:100]
+    proposals = list(gradient.index)
+    return proposals
     
     
   def get_split_proposals(self):
