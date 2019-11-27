@@ -30,7 +30,8 @@ class ThymeBoost():
                n_steps = 1,
                seasonal_smoothing = False,
                additive = True,
-               nested_seasonality = False):
+               nested_seasonality = False,
+               approximate_splits = False):
     
     self.bic = 10**100
     self.estimators = estimators
@@ -47,6 +48,7 @@ class ThymeBoost():
     self.seasonal_smoothing = seasonal_smoothing
     self.additive = additive   
     self.nested_seasonality = nested_seasonality
+    self.approximate_splits = approximate_splits
 
     if self.freq < 30:
       self.seasonal_smoothing = False
@@ -97,6 +99,16 @@ class ThymeBoost():
   
       y=np.convolve(w/w.sum(),s,mode='valid')
       return y
+   
+  def get_approximate_split_proposals(self):
+    return [i for i in list(range(1, len(self.boosted_data) - 2)) if i % 10 == 0]
+    
+    
+  def get_split_proposals(self):
+    if self.approximate_splits:
+      return self.get_approximate_split_proposals()
+    else:
+      return range(1, len(self.boosted_data) - 2)
   
   
   def get_trends(self):
@@ -107,33 +119,32 @@ class ThymeBoost():
     for c in range(0, self.max_changepoints):
       last_round_trends = 0
       round_changepoint = []
-      for i in range(N - 2):
-        if self.changepoints and (i in self.changepoints or
-                                  i + 1 in self.changepoints or
-                                  i - 1 in self.changepoints or
-                                  i + 2 in self.changepoints or
-                                  i - 2 in self.changepoints):
-          pass
-        else:
+      split_proposals = self.get_split_proposals()
+      if c == 0:
+        trend = self.ridge(self.boosted_data, np.mean(self.boosted_data))
+        found_bic = self.calc_bic(N, trend, c)
+        if self.bic > found_bic:
+          self.bic = found_bic
+          round_changepoint.append(0)
+          found_trends = trend + last_round_trends
+      else:
+        for i in split_proposals:
           split1_len = len(self.x[:i + 1])
           split2_len = N - split1_len        
           if split1_len < self.min_samples or split2_len < self.min_samples:
             pass            
           else:
-            if c == 0:
-              trend = self.ridge(self.boosted_data, np.mean(self.boosted_data))
-            else:
-              split1_len = 0
-              split2_len = 0
-              predi1 = self.ridge(self.boosted_data[:i + 1],
-                                np.mean(self.boosted_data[:i + 1]),
-                                ols_constant = False
-                                )
-              predi2 = self.ridge(self.boosted_data[i + 1:],
-                                predi1[-1],
-                                ols_constant = self.ols_constant
-                                )
-              trend = np.hstack([predi1, predi2])
+            split1_len = 0
+            split2_len = 0
+            predi1 = self.ridge(self.boosted_data[:i + 1],
+                              np.mean(self.boosted_data[:i + 1]),
+                              ols_constant = False
+                              )
+            predi2 = self.ridge(self.boosted_data[i + 1:],
+                              predi1[-1],
+                              ols_constant = self.ols_constant
+                              )
+            trend = np.hstack([predi1, predi2])
             found_bic = self.calc_bic(N, trend, c)
             if self.bic > found_bic:
               self.bic = found_bic
@@ -312,7 +323,6 @@ class ThymeBoost():
       plt.show()
 
     return
-    
     
 
 
